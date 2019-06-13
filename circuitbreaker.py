@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 import ctypes
 import multiprocessing
 
-STATE_CLOSED = 'closed'
-STATE_OPEN = 'open'
-STATE_HALF_OPEN = 'half-open'
+STATE_CLOSED = b'closed'
+STATE_OPEN = b'open'
+STATE_HALF_OPEN = b'half-open'
 
 
 class CircuitBreaker(object):
