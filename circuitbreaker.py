@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 import ctypes
 import multiprocessing
+import time
 
 STATE_CLOSED = b'closed'
 STATE_OPEN = b'open'
@@ -40,7 +41,7 @@ class CircuitBreaker(object):
         self._expected_exception = expected_exception or self.EXPECTED_EXCEPTION
         self._name = name
         self._state = multiprocessing.Value(ctypes.c_char_p, STATE_CLOSED)
-        self._opened = datetime.utcnow()
+        self._opened = multiprocessing.Value(ctypes.c_double, time.mktime(datetime.utcnow().timetuple()))
 
     def __call__(self, wrapped):
         return self.decorate(wrapped)
@@ -95,7 +96,8 @@ class CircuitBreaker(object):
         if self._failure_count.value >= self._failure_threshold:
             with self._state.get_lock():
                 self._state.value = STATE_OPEN
-            self._opened = datetime.utcnow()
+            with self._opened.get_lock():
+                self._opened.value = time.mktime(datetime.utcnow().timetuple())
 
     @property
     def state(self):
@@ -109,17 +111,17 @@ class CircuitBreaker(object):
     def open_until(self):
         """
         The datetime, when the circuit breaker will try to recover
-        :return: datetime
+        :return: epoch float
         """
-        return self._opened + timedelta(seconds=self._recovery_timeout)
+        return self._opened.value + self._recovery_timeout
 
     @property
     def open_remaining(self):
         """
         Number of seconds remaining, the circuit breaker stays in OPEN state
-        :return: int
+        :return: float
         """
-        return (self.open_until - datetime.utcnow()).total_seconds()
+        return self.open_until - time.mktime(datetime.utcnow().timetuple())
 
     @property
     def failure_count(self):

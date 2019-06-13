@@ -14,7 +14,7 @@ v = multiprocessing.Value('i')
 p("about to fork")
 v.value = 0
 l = multiprocessing.Lock()
-A= CircuitBreaker(failure_threshold=8, name="rogan-tset", expected_exception=ValueError, recovery_timeout=8)
+A= CircuitBreaker(failure_threshold=8, name="rogan-tset", expected_exception=ValueError, recovery_timeout=4)
 
 @A
 def test():
@@ -28,20 +28,21 @@ class B(object):
         with self.val.get_lock():
             self.val.value += 1
 
+from datetime import datetime
 
 if os.fork():
     prefix = "parent"
     # b = B()
     for i in xrange(10):
         with A._state.get_lock():
-            p("parent state of cb before:" + A.state + " failure count:" + str(A.failure_count))
+            p(str(datetime.utcnow()) + " parent state of cb before:" + A.state + " failure count:" + str(A.failure_count) + " time remaining:" + str(A.open_remaining))
         try:
             test()
         except Exception as e :
             print("parent " + str(e))
             with A._state.get_lock():
-                p("parent state of cb after:" + A.state + " failure count:" + str(A.failure_count))
-            time.sleep(3)
+                p(str(datetime.utcnow()) +" parent state of cb after:" + A.state + " failure count:" + str(A.failure_count) + " time remaining:" + str(A.open_remaining))
+            time.sleep(1)
 
 
     os.wait()
@@ -50,14 +51,14 @@ else:
     prefix = "child"
     for i in xrange(10):
         with A._state.get_lock():
-            p("child state of cb before:" + A.state + " failure count:" + str(A.failure_count))
+            p(str(datetime.utcnow()) +" child state of cb before:" + A.state + " failure count:" + str(A.failure_count) + " time remaining:" + str(A.open_remaining))
         try:
             test()
         except Exception as e:
             print("child " + str(e))
             with A._state.get_lock():
-                p("child state of cb after:" + A.state + " failure count:" + str(A.failure_count))
-            time.sleep(3)
+                p(str(datetime.utcnow()) + " child state of cb after:" + A.state + " failure count:" + str(A.failure_count) + " time remaining:" + str(A.open_remaining))
+            time.sleep(.5)
 
 
 p(prefix + " program ending")
