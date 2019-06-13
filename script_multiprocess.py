@@ -1,3 +1,7 @@
+"""
+You can ignore this file. It is just present to help run a simple program to
+test two processes communciating with one another
+"""
 from circuitbreaker import CircuitBreaker
 
 import os
