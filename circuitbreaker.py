@@ -17,6 +17,7 @@ STATE_HALF_OPEN = b'half-open'
 
 EPOCH = datetime.utcfromtimestamp(0)
 
+
 def unix_time_seconds(dt):
     return (dt - EPOCH).total_seconds()
 
