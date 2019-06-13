@@ -6,15 +6,19 @@ from __future__ import absolute_import
 
 from functools import wraps
 from datetime import datetime, timedelta
-# from typing import AnyStr, Iterable
+from typing import AnyStr, Iterable
 
 import ctypes
 import multiprocessing
-import time
 
 STATE_CLOSED = b'closed'
 STATE_OPEN = b'open'
 STATE_HALF_OPEN = b'half-open'
+
+EPOCH = datetime.utcfromtimestamp(0)
+
+def unix_time_seconds(dt):
+    return (dt - EPOCH).total_seconds()
 
 
 class CircuitBreaker(object):
@@ -41,7 +45,7 @@ class CircuitBreaker(object):
         self._expected_exception = expected_exception or self.EXPECTED_EXCEPTION
         self._name = name
         self._state = multiprocessing.Value(ctypes.c_char_p, STATE_CLOSED)
-        self._opened = multiprocessing.Value(ctypes.c_double, time.mktime(datetime.utcnow().timetuple()))
+        self._opened = multiprocessing.Value(ctypes.c_double, unix_time_seconds(datetime.utcnow()))
 
     def __call__(self, wrapped):
         return self.decorate(wrapped)
@@ -53,7 +57,7 @@ class CircuitBreaker(object):
         if self._name is None:
             self._name = function.__name__
 
-        # CircuitBreakerMonitor.register(self)
+        CircuitBreakerMonitor.register(self)
 
         @wraps(function)
         def wrapper(*args, **kwargs):
@@ -97,13 +101,12 @@ class CircuitBreaker(object):
             with self._state.get_lock():
                 self._state.value = STATE_OPEN
             with self._opened.get_lock():
-                self._opened.value = time.mktime(datetime.utcnow().timetuple())
+                self._opened.value = unix_time_seconds(datetime.utcnow())
 
     @property
     def state(self):
-        with self._state.get_lock():
-            if self._state.value == STATE_OPEN and self.open_remaining <= 0:
-                    self._state.value = STATE_HALF_OPEN
+        if self._state.value == STATE_OPEN and self.open_remaining <= 0:
+            return STATE_HALF_OPEN
 
         return self._state.value
 
@@ -121,7 +124,7 @@ class CircuitBreaker(object):
         Number of seconds remaining, the circuit breaker stays in OPEN state
         :return: float
         """
-        return self.open_until - time.mktime(datetime.utcnow().timetuple())
+        return self.open_until - unix_time_seconds(datetime.utcnow())
 
     @property
     def failure_count(self):
@@ -163,42 +166,42 @@ class CircuitBreakerError(Exception):
         )
 
 
-# class CircuitBreakerMonitor(object):
-#     circuit_breakers = {}
-#
-#     @classmethod
-#     def register(cls, circuit_breaker):
-#         cls.circuit_breakers[circuit_breaker.name] = circuit_breaker
-#
-#     @classmethod
-#     def all_closed(cls):
-#         # type: () -> bool
-#         return len(list(cls.get_open())) == 0
-#
-#     @classmethod
-#     def get_circuits(cls):
-#         # type: () -> Iterable[CircuitBreaker]
-#         return cls.circuit_breakers.values()
-#
-#     @classmethod
-#     def get(cls, name):
-#         # type: (AnyStr) -> CircuitBreaker
-#         return cls.circuit_breakers.get(name)
-#
-#     @classmethod
-#     def get_open(cls):
-#         # type: () -> Iterable[CircuitBreaker]
-#         for circuit in cls.get_circuits():
-#             if circuit.opened:
-#                 yield circuit
-#
-#     @classmethod
-#     def get_closed(cls):
-#         # type: () -> Iterable[CircuitBreaker]
-#         for circuit in cls.get_circuits():
-#             if circuit.closed:
-#                 yield circuit
-#
+class CircuitBreakerMonitor(object):
+    circuit_breakers = {}
+
+    @classmethod
+    def register(cls, circuit_breaker):
+        cls.circuit_breakers[circuit_breaker.name] = circuit_breaker
+
+    @classmethod
+    def all_closed(cls):
+        # type: () -> bool
+        return len(list(cls.get_open())) == 0
+
+    @classmethod
+    def get_circuits(cls):
+        # type: () -> Iterable[CircuitBreaker]
+        return cls.circuit_breakers.values()
+
+    @classmethod
+    def get(cls, name):
+        # type: (AnyStr) -> CircuitBreaker
+        return cls.circuit_breakers.get(name)
+
+    @classmethod
+    def get_open(cls):
+        # type: () -> Iterable[CircuitBreaker]
+        for circuit in cls.get_circuits():
+            if circuit.opened:
+                yield circuit
+
+    @classmethod
+    def get_closed(cls):
+        # type: () -> Iterable[CircuitBreaker]
+        for circuit in cls.get_circuits():
+            if circuit.closed:
+                yield circuit
+
 
 def circuit(failure_threshold=None,
             recovery_timeout=None,
