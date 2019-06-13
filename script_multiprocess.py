@@ -15,10 +15,15 @@ p("about to fork")
 v.value = 0
 l = multiprocessing.Lock()
 A= CircuitBreaker(failure_threshold=8, name="rogan-tset", expected_exception=ValueError, recovery_timeout=4)
+C = CircuitBreaker(failure_threshold=8, name="boooo-test", expected_exception=ValueError, recovery_timeout=4)
 
 @A
 def test():
     raise ValueError("sorry rogan")
+
+@C
+def test1():
+    print "hello"
 
 class B(object):
     def __init__(self):
@@ -47,6 +52,8 @@ if os.fork():
 
     os.wait()
     p("parent says value is: %s" % (A.state,))
+    p(str(datetime.utcnow()) + " FINAL parent state of cb:" + C.state + " failure count:" + str(C.failure_count) + " time remaining:" + str(C.open_remaining))
+
 else:
     prefix = "child"
     for i in xrange(10):
@@ -60,5 +67,5 @@ else:
                 p(str(datetime.utcnow()) + " child state of cb after:" + A.state + " failure count:" + str(A.failure_count) + " time remaining:" + str(A.open_remaining))
             time.sleep(.5)
 
-
+    p(str(datetime.utcnow()) + " FINAL child state of cb:" + C.state + " failure count:" + str(C.failure_count) + " time remaining:" + str(C.open_remaining))
 p(prefix + " program ending")
