@@ -5,7 +5,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import AnyStr, Iterable
 
 import ctypes
