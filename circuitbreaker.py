@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 import ctypes
 import multiprocessing
+import os
 
 STATE_CLOSED = b'closed'
 STATE_OPEN = b'open'
@@ -66,12 +67,15 @@ class CircuitBreaker(object):
         rules on success or failure
         :param func: Decorated function
         """
+        print("{} cb before: {} failure count:{}".format(str(os.getpid()), self.state, self.failure_count))
+
         if self.opened:
             raise CircuitBreakerError(self)
         try:
             result = func(*args, **kwargs)
         except self._expected_exception:
             self.__call_failed()
+            print("{} cb after: {} failure count:{}".format(str(os.getpid()), self.state, self.failure_count))
             raise
 
         self.__call_succeeded()
