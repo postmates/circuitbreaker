@@ -31,7 +31,7 @@ class CircuitBreaker(object):
                  failure_threshold=None,
                  recovery_timeout=None,
                  expected_exception=None,
-                 name=None):
+                 name=None, lock=None):
         """
         
         :param failure_threshold: The minimum number of failures before opening circuit
@@ -40,13 +40,14 @@ class CircuitBreaker(object):
         :param expected_exception: Any exception expected from the external network call
         :param name: The name of the circuit breaker
         """
-        self._failure_count = multiprocessing.Value(ctypes.c_int, 0)
+        self._lock = multiprocessing.Lock()
+        self._failure_count = multiprocessing.Value(ctypes.c_int, 0, lock=self._lock)
         self._failure_threshold = failure_threshold or self.FAILURE_THRESHOLD
         self._recovery_timeout = recovery_timeout or self.RECOVERY_TIMEOUT
         self._expected_exception = expected_exception or self.EXPECTED_EXCEPTION
         self._name = name
-        self._state = multiprocessing.Value(ctypes.c_char_p, STATE_CLOSED)
-        self._opened = multiprocessing.Value(ctypes.c_double, unix_time_seconds(datetime.utcnow()))
+        self._state = multiprocessing.Value(ctypes.c_char_p, STATE_CLOSED, lock=self._lock)
+        self._opened = multiprocessing.Value(ctypes.c_double, unix_time_seconds(datetime.utcnow()), lock=self._lock)
 
     def __call__(self, wrapped):
         return self.decorate(wrapped)
@@ -87,22 +88,19 @@ class CircuitBreaker(object):
         """
         Close circuit after successful execution and reset failure count
         """
-        with self._state.get_lock():
+        with self._lock:
             self._state.value = STATE_CLOSED
-        with self._failure_count.get_lock():
             self._failure_count.value = 0
 
     def __call_failed(self):
         """
         Count failure and open circuit, if threshold has been reached
         """
-        with self._failure_count.get_lock():
+        with self._lock():
             self._failure_count.value += 1
-        if self._failure_count.value >= self._failure_threshold:
-            with self._state.get_lock():
-                self._state.value = STATE_OPEN
-            with self._opened.get_lock():
-                self._opened.value = unix_time_seconds(datetime.utcnow())
+            if self._failure_count.value >= self._failure_threshold:
+                    self._state.value = STATE_OPEN
+                    self._opened.value = unix_time_seconds(datetime.utcnow())
 
     @property
     def state(self):
