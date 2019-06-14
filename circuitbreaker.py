@@ -31,7 +31,7 @@ class CircuitBreaker(object):
                  failure_threshold=None,
                  recovery_timeout=None,
                  expected_exception=None,
-                 name=None, lock=None):
+                 name=None):
         """
         
         :param failure_threshold: The minimum number of failures before opening circuit
@@ -40,7 +40,7 @@ class CircuitBreaker(object):
         :param expected_exception: Any exception expected from the external network call
         :param name: The name of the circuit breaker
         """
-        self._lock = multiprocessing.Lock()
+        self._lock = multiprocessing.RLock()
         self._failure_count = multiprocessing.Value(ctypes.c_int, 0, lock=self._lock)
         self._failure_threshold = failure_threshold or self.FAILURE_THRESHOLD
         self._recovery_timeout = recovery_timeout or self.RECOVERY_TIMEOUT
@@ -96,7 +96,7 @@ class CircuitBreaker(object):
         """
         Count failure and open circuit, if threshold has been reached
         """
-        with self._lock():
+        with self._lock:
             self._failure_count.value += 1
             if self._failure_count.value >= self._failure_threshold:
                     self._state.value = STATE_OPEN

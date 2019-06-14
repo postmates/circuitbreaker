@@ -18,8 +18,8 @@ v = multiprocessing.Value('i')
 p("about to fork")
 v.value = 0
 l = multiprocessing.Lock()
-A= CircuitBreaker(failure_threshold=8, name="rogan-tset", expected_exception=ValueError, recovery_timeout=4, lock=l)
-C = CircuitBreaker(failure_threshold=8, name="boooo-test", expected_exception=ValueError, recovery_timeout=4, lock=l)
+A= CircuitBreaker(failure_threshold=8, name="rogan-tset", expected_exception=ValueError, recovery_timeout=4,)
+C = CircuitBreaker(failure_threshold=8, name="boooo-test", expected_exception=ValueError, recovery_timeout=4,)
 
 @A
 def test():
