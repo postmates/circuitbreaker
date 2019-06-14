@@ -112,7 +112,7 @@ class CircuitBreaker(object):
     @property
     def open_until(self):
         """
-        The datetime, when the circuit breaker will try to recover
+        The epoch of when the circuit breaker will try to recover
         :return: epoch float
         """
         return self._opened.value + self._recovery_timeout
