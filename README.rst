@@ -24,6 +24,21 @@ The project is available on PyPI. Simply run::
 
     $ pip install circuitbreaker
 
+Why not circuitfixer ? 
+----------------------
+
+*Circuitfixer* (https://github.com/postmates/circuitfixer) can be confusing for first time users. It uses
+the idea of an exponential moving average to keep track of when the circuit breaker should open/close. 
+It also does not work well with multi-process applications: each process has an independent view of the 
+circuitfixer state, so it takes much longer for all of them to detect an outage.  This is not ideal for 
+service reliability. 
+
+<Drum Roll>Hello Circuitbreaker!</Drum Roll> This library uses shared memory to maintain a consistent state among processes within the same instance of an app.  In addition, 
+the semantics to decide when to open / close a circuit breaker are simpler, and are based on a simple counter of consecutive failures.
+This library is meant to be much more understandable for first time users.  These factors will help ensure maintainability, and 
+reliability across our services. 
+
+Continue reading below for more details on how to configure a circuitbreaker.  
 
 Usage
 -----
