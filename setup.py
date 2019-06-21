@@ -21,7 +21,7 @@ setup(
     author_email='pypi@fabfuel.de',
     description='Python Circuit Breaker pattern implementation',
     long_description=readme(),
-    py_modules=['circuitbreaker'],
+    packages=['circuitbreaker'],
     include_package_data=True,
     zip_safe=False,
     platforms='any',
