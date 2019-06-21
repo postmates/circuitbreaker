@@ -1,6 +1,6 @@
 from mock.mock import patch
 
-from circuitbreaker import CircuitBreaker, CircuitBreakerError, circuit
+from circuitbreaker.circuitbreaker import CircuitBreaker, CircuitBreakerError, circuit
 
 
 def test_circuitbreaker__str__():
@@ -16,14 +16,14 @@ def test_circuitbreaker_error__str__():
     assert str(error).endswith('(0 failures, 30 sec remaining)')
 
 
-@patch('circuitbreaker.CircuitBreaker.decorate')
+@patch('circuitbreaker.circuitbreaker.CircuitBreaker.decorate')
 def test_circuit_decorator_without_args(circuitbreaker_mock):
     function = lambda: True
     circuit(function)
     circuitbreaker_mock.assert_called_once_with(function)
 
 
-@patch('circuitbreaker.CircuitBreaker.__init__')
+@patch('circuitbreaker.circuitbreaker.CircuitBreaker.__init__')
 def test_circuit_decorator_with_args(circuitbreaker_mock):
     circuitbreaker_mock.return_value = None
     circuit(10, 20, KeyError, 'foobar')

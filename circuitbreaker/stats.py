@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from __future__ import absolute_import
+
 from prometheus_client import Counter, Gauge
-from circuitbreaker import STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN
+from circuitbreaker.states import STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN
 
 """
 Prometheus Stats
@@ -21,6 +25,7 @@ place. The states can be one of the following values:
 circuit_breaker_state = Gauge("circuit_breaker_state", "State of Circuit Breaker", ["name"])
 circuit_breaker_failure_total = Counter("circuit_breaker_failure_total", "Count of failed remote calls", ["name", "state"])
 circuit_breaker_success_total = Counter("circuit_breaker_success_total", "Count of success remote calls", ["name", "state"])
+
 
 def record_circuit_breaker_state(name, state):
     if state == STATE_CLOSED:

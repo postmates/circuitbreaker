@@ -10,14 +10,11 @@ from typing import AnyStr, Iterable
 
 import ctypes
 import multiprocessing
-
+from circuitbreaker.states import STATE_CLOSED, STATE_OPEN, STATE_HALF_OPEN
 from circuitbreaker.stats import (
     record_circuit_breaker_state, record_circuit_breaker_success_total,
     record_circuit_breaker_failure_total)
 
-STATE_CLOSED = b'closed'
-STATE_OPEN = b'open'
-STATE_HALF_OPEN = b'half-open'
 
 EPOCH = datetime.utcfromtimestamp(0)
 

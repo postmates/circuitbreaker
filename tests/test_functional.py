@@ -3,8 +3,9 @@ from time import sleep
 from mock.mock import patch, Mock
 from pytest import raises
 
-from circuitbreaker import CircuitBreaker, CircuitBreakerError, \
-    CircuitBreakerMonitor, STATE_CLOSED, STATE_HALF_OPEN, STATE_OPEN
+from circuitbreaker.circuitbreaker import CircuitBreaker, CircuitBreakerError, \
+    CircuitBreakerMonitor
+from circuitbreaker.states import STATE_CLOSED, STATE_HALF_OPEN, STATE_OPEN
 
 
 def pseudo_remote_call():
